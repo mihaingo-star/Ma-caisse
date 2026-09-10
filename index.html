@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1d4ed8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ma Caisse">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Ma Caisse</title>
+<style>
+:root {
+  --bg:#f3f4f6; --card:#fff; --text:#111827; --muted:#4b5563;
+  --border:#9ca3af; --head:#e5e7eb; --accent:#1d4ed8;
+  --good:#166534; --goodbg:#dcfce7; --bad:#991b1b; --badbg:#fee2e2;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--text);font-size:17px}
+.container{max-width:1180px;margin:0 auto;padding:14px;padding-bottom:calc(22px + env(safe-area-inset-bottom))}
+h1{text-align:center;font-size:28px;margin:8px 0 3px}
+.intro{text-align:center;color:var(--muted);margin-bottom:14px}
+.card{background:var(--card);border:1.5px solid #d1d5db;border-radius:14px;padding:14px;margin-bottom:14px}
+h2{font-size:21px;margin:0 0 12px}
+.top-grid,.recon{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{font-weight:700;display:block;margin-bottom:7px}
+input,select{width:100%;font-size:17px;min-height:48px;padding:10px;border:2px solid var(--border);border-radius:9px;background:#fff}
+select{appearance:auto}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:760px;table-layout:fixed}
+th,td{border:1px solid var(--border);padding:6px}
+th{background:var(--head);text-align:center;font-size:15px}
+td.num{text-align:center;font-weight:700;background:#f9fafb}
+td.total{text-align:right;font-weight:800;background:#f9fafb}
+.hidden{display:none!important}
+.custom-name{margin-top:6px}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.box{border:2px solid var(--border);padding:12px;border-radius:10px;text-align:center}
+.box .label{font-weight:700;font-size:14px;color:var(--muted)}
+.box .value{font-size:21px;font-weight:800;margin-top:5px}
+.result{margin-top:13px;padding:14px;border-radius:10px;border:2px solid var(--border);font-weight:800;text-align:center}
+.good{background:var(--goodbg);color:var(--good);border-color:#86efac}
+.bad{background:var(--badbg);color:var(--bad);border-color:#fca5a5}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{min-height:52px;font-size:17px;font-weight:800;padding:12px;border:0;border-radius:10px;cursor:pointer}
+.primary{background:var(--accent);color:#fff}
+.secondary{background:#374151;color:#fff}
+.light{background:#e5e7eb;color:#111827}
+.note{font-size:14px;color:var(--muted);margin-top:9px;text-align:center}
+.special-note{font-size:14px;color:#7c2d12;margin-top:7px}
+.install-tip{background:#eff6ff;border:1px solid #bfdbfe;padding:11px;border-radius:10px;margin-bottom:14px;font-size:15px}
+@media(max-width:700px){
+ .container{padding:10px}
+ .top-grid,.summary,.recon,.buttons{grid-template-columns:1fr}
+ h1{font-size:25px}
+ .card{padding:12px}
+}
+@media print{
+ body{background:#fff;font-size:11px}.container{padding:0;max-width:none}
+ .card{border:1px solid #777;padding:7px;margin-bottom:7px;break-inside:avoid}
+ .no-print,.install-tip{display:none!important}
+ .table-wrap{overflow:visible}
+ table{min-width:0}
+ input,select{border:0;padding:1px;min-height:0;font-size:11px;appearance:none}
+ h1{font-size:18px}h2{font-size:14px}th{font-size:10px}td{padding:2px}
+ .box .value{font-size:13px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>MA CAISSE</h1>
+<div class="intro">Ventes journalières — Ariary (MGA)</div>
+
+<div class="install-tip no-print">
+Sur iPhone/iPad : ouvrez ce site dans Safari → bouton Partager → <strong>Ajouter à l’écran d’accueil</strong>.
+</div>
+
+<div class="card">
+<div class="top-grid">
+ <div><label for="date">Date</label><input type="date" id="date"></div>
+ <div><label for="depart">Solde de départ (MGA)</label><input type="number" id="depart" inputmode="numeric" min="0" step="1" placeholder="0" oninput="calculerTout()"></div>
+</div>
+</div>
+
+<div class="card">
+<h2>1. VENTES</h2>
+<div class="table-wrap">
+<table id="ventes">
+<thead><tr>
+<th style="width:5%">N°</th><th style="width:34%">Produit</th><th style="width:20%">Prix</th>
+<th style="width:13%">Qté</th><th style="width:28%">Total</th>
+</tr></thead>
+<tbody></tbody>
+</table>
+</div>
+<div class="special-note">News / Gauloise : 1 = 300 MGA, 2 = 500 MGA, puis le calcul continue automatiquement par paire.</div>
+</div>
+
+<div class="card">
+<h2>2. SORTIES DE CAISSE</h2>
+<div class="table-wrap">
+<table id="sorties" style="min-width:600px">
+<thead><tr><th style="width:8%">N°</th><th style="width:57%">Motif / Description</th><th style="width:35%">Montant</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+
+<div class="card">
+<h2>3. TOTAL DE LA JOURNÉE</h2>
+<div class="summary">
+ <div class="box"><div class="label">TOTAL DES VENTES</div><div class="value" id="totalVentes">0 MGA</div></div>
+ <div class="box"><div class="label">TOTAL SORTIES</div><div class="value" id="totalSorties">0 MGA</div></div>
+ <div class="box"><div class="label">SOLDE ATTENDU</div><div class="value" id="attendu">0 MGA</div></div>
+</div>
+</div>
+
+<div class="card">
+<h2>4. VÉRIFICATION DE LA CAISSE</h2>
+<div class="recon">
+ <div><label>Solde attendu</label><input id="attenduChamp" type="text" readonly></div>
+ <div><label for="reel">Argent réellement présent (MGA)</label><input id="reel" type="number" inputmode="numeric" min="0" step="1" placeholder="Montant compté" oninput="calculerTout()"></div>
+ <div><label>Différence</label><input id="difference" type="text" readonly></div>
+ <div><label>Total des ventes</label><input id="ventesChamp" type="text" readonly></div>
+</div>
+<div class="result" id="etat">Entrez le montant réellement présent en caisse.</div>
+</div>
+
+<div class="card no-print">
+<h2>5. FIN DE JOURNÉE</h2>
+<div class="buttons">
+ <button class="primary" onclick="calculerTout()">CALCULER</button>
+ <button class="secondary" onclick="imprimerPDF()">ENREGISTRER EN PDF</button>
+ <button class="light" onclick="sauvegarder()">SAUVEGARDER LA JOURNÉE</button>
+ <button class="light" onclick="charger()">OUVRIR UNE JOURNÉE</button>
+ <button class="light" onclick="nouvelleJournee()">NOUVELLE JOURNÉE</button>
+</div>
+<div class="note">Les journées restent enregistrées sur cet appareil dans cette application web.</div>
+</div>
+</div>
+
+<script>
+const PRODUITS = {"Glace": [100, 200, 500], "Oxi / Vao Line": [300], "Klin": [400], "Mofo Voanjo / Paty / Lasary": [500, 1000], "Vary": [650, 800, 700, 750], "Menaka": [500, 300, 1000], "Siramamy": [1200, 500, 3000], "Presto / Matsiro": [1000], "Sedaap": [2000], "Calinou": [500], "Bebeo": [700], "Couche": [800], "Sira": [300], "Fanafody": [100, 200, 300, 400], "News / Gauloise": ["SPECIAL"], "Melia": [300], "GL": [400], "Autre": ["CUSTOM"], "Yaourt maison": [600], "Izy": [1000], "Yaourt": [1200], "Galety / Pain choco / Croissant": [100, 200, 300], "Bonbon / Silgoma / Tamarin": [100, 200, 300], "Cacapigeon": [500, 200], "Biscuit": [100], "Savony": [800, 1000, 1200, 700, 1300, 1400, 1500], "Beurre": [100, 200, 300]};
+const NF=new Intl.NumberFormat('fr-FR');
+const argent=n=>NF.format(Math.round(Number(n)||0))+' MGA';
+
+function optionsProduits(){
+ let s='<option value="">-- Choisir --</option>';
+ Object.keys(PRODUITS).forEach(p=>s+=`<option value="${p}">${p}</option>`);
+ return s;
+}
+
+function creerVentes(nombre=25){
+ const tb=document.querySelector('#ventes tbody');tb.innerHTML='';
+ for(let i=1;i<=nombre;i++){
+   const tr=document.createElement('tr');
+   tr.innerHTML=`
+   <td class="num">${i}</td>
+   <td><select class="produit" onchange="produitChange(this)">${optionsProduits()}</select>
+       <input class="custom-name hidden custom-name" type="text" placeholder="Nom du produit"></td>
+   <td><select class="prix" onchange="calculLigne(this.closest('tr'))"><option value="">-- Prix --</option></select>
+       <input class="prix-custom hidden" type="number" inputmode="numeric" min="0" step="1" placeholder="Prix" oninput="calculLigne(this.closest('tr'))"></td>
+   <td><input class="qte" type="number" inputmode="numeric" min="1" step="1" value="1" oninput="calculLigne(this.closest('tr'))"></td>
+   <td class="total"><span class="total-ligne">0 MGA</span></td>`;
+   tb.appendChild(tr);
+ }
+}
+
+function creerSorties(nombre=8){
+ const tb=document.querySelector('#sorties tbody');tb.innerHTML='';
+ for(let i=1;i<=nombre;i++){
+   const tr=document.createElement('tr');
+   tr.innerHTML=`<td class="num">${i}</td><td><input class="motif" type="text"></td>
+   <td><input class="montant" type="number" inputmode="numeric" min="0" step="1" placeholder="0" oninput="calculerTout()"></td>`;
+   tb.appendChild(tr);
+ }
+}
+
+function produitChange(sel){
+ const tr=sel.closest('tr'), p=sel.value;
+ const ps=tr.querySelector('.prix'), pc=tr.querySelector('.prix-custom'), cn=tr.querySelector('.custom-name');
+ ps.innerHTML='<option value="">-- Prix --</option>';ps.classList.remove('hidden');pc.classList.add('hidden');pc.value='';
+ cn.classList.toggle('hidden',p!=='Autre');
+ if(!p){calculLigne(tr);return}
+ const vals=PRODUITS[p];
+ if(vals[0]==='SPECIAL') ps.innerHTML='<option value="SPECIAL">Automatique</option>';
+ else if(vals[0]==='CUSTOM'){ps.classList.add('hidden');pc.classList.remove('hidden')}
+ else{vals.forEach(v=>ps.innerHTML+=`<option value="${v}">${argent(v)}</option>`);if(vals.length===1)ps.value=String(vals[0])}
+ calculLigne(tr);
+}
+
+function totalNewsGauloise(q){
+ q=Math.max(0,parseInt(q)||0);
+ return Math.floor(q/2)*500+(q%2)*300;
+}
+
+function valeurLigne(tr){
+ const p=tr.querySelector('.produit').value;
+ const q=Math.max(1,Number(tr.querySelector('.qte').value)||1);
+ if(p==='News / Gauloise')return totalNewsGauloise(q);
+ if(p==='Autre')return (Number(tr.querySelector('.prix-custom').value)||0)*q;
+ return (Number(tr.querySelector('.prix').value)||0)*q;
+}
+
+function calculLigne(tr){
+ tr.querySelector('.total-ligne').textContent=argent(valeurLigne(tr));calculerTout();
+}
+
+function calculerTout(){
+ const depart=Number(document.getElementById('depart').value)||0;
+ let totalV=0;document.querySelectorAll('#ventes tbody tr').forEach(tr=>totalV+=valeurLigne(tr));
+ const totalS=[...document.querySelectorAll('.montant')].reduce((s,x)=>s+(Number(x.value)||0),0);
+ const attendu=depart+totalV-totalS;
+ const re=document.getElementById('reel'), reel=Number(re.value)||0, diff=reel-attendu;
+ document.getElementById('totalVentes').textContent=argent(totalV);
+ document.getElementById('totalSorties').textContent=argent(totalS);
+ document.getElementById('attendu').textContent=argent(attendu);
+ document.getElementById('attenduChamp').value=argent(attendu);
+ document.getElementById('ventesChamp').value=argent(totalV);
+ document.getElementById('difference').value=argent(diff);
+ const e=document.getElementById('etat');
+ if(re.value===''){e.className='result';e.textContent='Entrez le montant réellement présent en caisse.'}
+ else if(diff===0){e.className='result good';e.textContent='CAISSE CORRECTE — Aucune différence.'}
+ else if(diff>0){e.className='result bad';e.textContent='EXCÉDENT DE CAISSE : '+argent(Math.abs(diff))}
+ else{e.className='result bad';e.textContent='MANQUE EN CAISSE : '+argent(Math.abs(diff))}
+}
+
+function dataJournee(){
+ return {
+  date:date.value,depart:document.getElementById('depart').value,reel:document.getElementById('reel').value,
+  ventes:[...document.querySelectorAll('#ventes tbody tr')].map(tr=>({
+   produit:tr.querySelector('.produit').value,customName:tr.querySelector('.custom-name').value,
+   prix:tr.querySelector('.prix').value,prixCustom:tr.querySelector('.prix-custom').value,qte:tr.querySelector('.qte').value
+  })),
+  sorties:[...document.querySelectorAll('#sorties tbody tr')].map(tr=>({
+   motif:tr.querySelector('.motif').value,montant:tr.querySelector('.montant').value
+  }))
+ }
+}
+
+function sauvegarder(){
+ const d=dataJournee();if(!d.date){alert('Choisissez une date.');return}
+ localStorage.setItem('caisse_'+d.date,JSON.stringify(d));alert('Journée sauvegardée.');
+}
+function charger(){
+ const dt=document.getElementById('date').value;if(!dt){alert('Choisissez une date.');return}
+ const raw=localStorage.getItem('caisse_'+dt);if(!raw){alert('Aucune journée sauvegardée pour cette date.');return}
+ const d=JSON.parse(raw);document.getElementById('depart').value=d.depart||'';document.getElementById('reel').value=d.reel||'';
+ creerVentes();creerSorties();
+ (d.ventes||[]).forEach((x,i)=>{
+  const tr=document.querySelectorAll('#ventes tbody tr')[i];if(!tr)return;
+  const s=tr.querySelector('.produit');s.value=x.produit||'';produitChange(s);
+  tr.querySelector('.custom-name').value=x.customName||'';
+  if(x.produit==='Autre')tr.querySelector('.prix-custom').value=x.prixCustom||'';
+  else if(x.produit!=='News / Gauloise')tr.querySelector('.prix').value=x.prix||'';
+  tr.querySelector('.qte').value=x.qte||1;calculLigne(tr);
+ });
+ (d.sorties||[]).forEach((x,i)=>{
+  const tr=document.querySelectorAll('#sorties tbody tr')[i];if(!tr)return;
+  tr.querySelector('.motif').value=x.motif||'';tr.querySelector('.montant').value=x.montant||'';
+ });
+ calculerTout();
+}
+function nouvelleJournee(){
+ if(!confirm('Commencer une nouvelle journée ?'))return;
+ document.getElementById('depart').value='';document.getElementById('reel').value='';creerVentes();creerSorties();calculerTout();
+}
+function imprimerPDF(){
+ calculerTout();const old=document.title;document.title='Caisse_'+(document.getElementById('date').value||'journee');window.print();document.title=old;
+}
+window.addEventListener('DOMContentLoaded',()=>{
+ const d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),j=String(d.getDate()).padStart(2,'0');
+ document.getElementById('date').value=`${y}-${m}-${j}`;creerVentes();creerSorties();calculerTout();
+ if('serviceWorker' in navigator)navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+});
+</script>
+</body>
+</html>
